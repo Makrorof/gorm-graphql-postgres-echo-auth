@@ -1,0 +1,49 @@
+enum ProductIDType{
+  UPC
+  EAN
+}
+
+type ProductID{
+  id: String!
+  type: ProductIDType!
+}
+
+type ProductInfo {
+  id: ID!
+  type: ProductIDType!
+
+  title: String!
+  price: Float
+  sellerName: String
+  offers: [Offer!]
+}
+
+type Offer {
+  name: String!
+  price: Float!
+}
+
+input ProductIDInput{
+  id: String!
+  type: ProductIDType!
+}
+
+#input ProductInfoInput {
+#  id: ID! @id
+#  type: ProductIDType! @id
+#
+#  title: String!
+#  price: Float
+#  sellerName: String
+#  offers: [OfferInput!]
+#}
+#
+#input OfferInput {
+#  name: String!
+#  price: Float!
+#}
+#
+#input ProductIDInput{
+#  id: String!
+#  type: ProductIDType!
+#}

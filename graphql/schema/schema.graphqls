@@ -1,0 +1,20 @@
+type Mutation {
+  createRequest(input: ScanRequestInput!): ScanRequest!
+  deleteRequest(id: ID!): Boolean!
+
+
+  createUser(input: UserInput!): User!
+  updateUser(userId: ID!, input: UserInput!): User!
+  deleteUser(userId: ID!): Boolean!
+
+  createPlan(input: PlanInput!): Plan!
+  updatePlan(input: PlanInput!): Plan!
+  deletePlan(planId: ID!): Boolean!
+
+  selectPlan(userId: ID!, planId: ID!): UserPlan!
+  cancelPlan(userId: ID!, planId: ID!): Boolean!
+}
+
+type Query {
+  requests: [ScanRequest!]!
+}

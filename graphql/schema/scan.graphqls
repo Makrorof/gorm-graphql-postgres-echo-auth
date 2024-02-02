@@ -1,0 +1,17 @@
+type ScanRequest {
+  id: ID!
+  user: User!
+  products: [ProductID!]!
+}
+
+type ScannedProductInfo{
+  leftProductInfo: ProductInfo!
+  rightProductInfo: ProductInfo!
+
+  profit: Float!
+}
+
+
+input ScanRequestInput {
+  products: [ProductIDInput!]!
+}

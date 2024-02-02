@@ -1,0 +1,16 @@
+scalar Time
+
+type Plan {
+  id: ID!
+  name: String!
+  price: Float!
+  maxDailyScan: Int!
+  created_at: Time! 
+  creator: User
+}
+
+input PlanInput {
+  name: String!
+  price: Float!
+  maxDailyScan: Int!
+}

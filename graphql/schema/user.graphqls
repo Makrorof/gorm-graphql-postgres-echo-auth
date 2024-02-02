@@ -1,0 +1,22 @@
+type User{
+  id: ID!
+  email: String!
+  avatarID: Int
+  created_at: Time!
+  plan: UserPlan!
+}
+
+input UserInput {
+  email: String!
+  password: String
+  avatarID: Int
+}
+
+
+type UserPlan {
+  id: ID!
+  user: User!
+  selectedPlan: Plan
+  startAt: Time
+  endAt: Time
+}
