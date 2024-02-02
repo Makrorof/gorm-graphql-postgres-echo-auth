@@ -17,4 +17,5 @@ type Mutation {
 
 type Query {
   requests: [ScanRequest!]!
+  scannedProducts(requestId: ID!): [ScannedProductInfo!]!
 }
