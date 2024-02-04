@@ -8,9 +8,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/99designs/gqlgen/graphql"
 	"github.com/makrorof/gorm-graphql-postgres-echo-auth/graphql/graph/model"
-	"github.com/vektah/gqlparser/v2/ast"
+	"github.com/makrorof/gorm-graphql-postgres-echo-auth/tools"
 )
 
 // Requests is the resolver for the requests field.
@@ -22,17 +21,11 @@ func (r *queryResolver) Requests(ctx context.Context) ([]*model.ScanRequest, err
 func (r *queryResolver) ScannedProducts(ctx context.Context, requestID string, sortBy *model.SortBy) ([]*model.ScannedProductInfo, error) {
 	//panic(fmt.Errorf("not implemented: ScannedProducts - scannedProducts"))
 
-	gctx := graphql.GetFieldContext(ctx)
+	sortByList := tools.GetValuesFromSelections(ctx, &model.SortBy{})
 
-	for _, argument := range gctx.Field.Selections {
-		field := argument.(*ast.Field)
-
-		for _, argument := range field.Arguments {
-			fmt.Println(argument)
-
-			vSortBy := &model.SortBy{}
-			fmt.Println("Err:", graphql.UnmarshalInputFromContext(ctx, argument.Value.Children, vSortBy))
-		}
+	for key, val := range sortByList {
+		sortBy := val.(*model.SortBy)
+		fmt.Println("Key:", key, " Value: ", *sortBy)
 	}
 
 	dummy := make([]*model.ScannedProductInfo, 0)
