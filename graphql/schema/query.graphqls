@@ -1,0 +1,4 @@
+type Query {
+  requests: [ScanRequest!]!
+  scannedProducts(requestId: ID!, sortBy: SortBy): [ScannedProductInfo!]!
+}

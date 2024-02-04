@@ -90,7 +90,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Requests        func(childComplexity int) int
-		ScannedProducts func(childComplexity int, requestID string) int
+		ScannedProducts func(childComplexity int, requestID string, sortBy *model.SortBy) int
 	}
 
 	ScanRequest struct {
@@ -100,9 +100,9 @@ type ComplexityRoot struct {
 	}
 
 	ScannedProductInfo struct {
-		LeftProductInfo  func(childComplexity int) int
+		LeftProductInfo  func(childComplexity int, sortBy *model.SortBy) int
 		Profit           func(childComplexity int) int
-		RightProductInfo func(childComplexity int) int
+		RightProductInfo func(childComplexity int, sortBy *model.SortBy) int
 	}
 
 	User struct {
@@ -136,7 +136,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Requests(ctx context.Context) ([]*model.ScanRequest, error)
-	ScannedProducts(ctx context.Context, requestID string) ([]*model.ScannedProductInfo, error)
+	ScannedProducts(ctx context.Context, requestID string, sortBy *model.SortBy) ([]*model.ScannedProductInfo, error)
 }
 
 type executableSchema struct {
@@ -407,7 +407,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.ScannedProducts(childComplexity, args["requestId"].(string)), true
+		return e.complexity.Query.ScannedProducts(childComplexity, args["requestId"].(string), args["sortBy"].(*model.SortBy)), true
 
 	case "ScanRequest.id":
 		if e.complexity.ScanRequest.ID == nil {
@@ -435,7 +435,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.ScannedProductInfo.LeftProductInfo(childComplexity), true
+		args, err := ec.field_ScannedProductInfo_leftProductInfo_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.ScannedProductInfo.LeftProductInfo(childComplexity, args["sortBy"].(*model.SortBy)), true
 
 	case "ScannedProductInfo.profit":
 		if e.complexity.ScannedProductInfo.Profit == nil {
@@ -449,7 +454,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.ScannedProductInfo.RightProductInfo(childComplexity), true
+		args, err := ec.field_ScannedProductInfo_rightProductInfo_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.ScannedProductInfo.RightProductInfo(childComplexity, args["sortBy"].(*model.SortBy)), true
 
 	case "User.avatarID":
 		if e.complexity.User.AvatarID == nil {
@@ -532,6 +542,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputPlanInput,
 		ec.unmarshalInputProductIDInput,
 		ec.unmarshalInputScanRequestInput,
+		ec.unmarshalInputSortBy,
 		ec.unmarshalInputUserInput,
 	)
 	first := true
@@ -630,6 +641,22 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
+	{Name: "../schema/mutation.graphqls", Input: `type Mutation {
+  createRequest(input: ScanRequestInput!): ScanRequest!
+  deleteRequest(id: ID!): Boolean!
+
+
+  createUser(input: UserInput!): User!
+  updateUser(userId: ID!, input: UserInput!): User!
+  deleteUser(userId: ID!): Boolean!
+
+  createPlan(input: PlanInput!): Plan!
+  updatePlan(input: PlanInput!): Plan!
+  deletePlan(planId: ID!): Boolean!
+
+  selectPlan(userId: ID!, planId: ID!): UserPlan!
+  cancelPlan(userId: ID!, planId: ID!): Boolean!
+}`, BuiltIn: false},
 	{Name: "../schema/plan.graphqls", Input: `scalar Time
 
 type Plan {
@@ -696,6 +723,10 @@ input ProductIDInput{
 #  id: String!
 #  type: ProductIDType!
 #}`, BuiltIn: false},
+	{Name: "../schema/query.graphqls", Input: `type Query {
+  requests: [ScanRequest!]!
+  scannedProducts(requestId: ID!, sortBy: SortBy): [ScannedProductInfo!]!
+}`, BuiltIn: false},
 	{Name: "../schema/scan.graphqls", Input: `type ScanRequest {
   id: ID!
   user: User!
@@ -703,8 +734,8 @@ input ProductIDInput{
 }
 
 type ScannedProductInfo{
-  leftProductInfo: ProductInfo!
-  rightProductInfo: ProductInfo!
+  leftProductInfo(sortBy: SortBy): ProductInfo!
+  rightProductInfo(sortBy: SortBy): ProductInfo!
 
   profit: Float!
 }
@@ -713,26 +744,14 @@ type ScannedProductInfo{
 input ScanRequestInput {
   products: [ProductIDInput!]!
 }`, BuiltIn: false},
-	{Name: "../schema/schema.graphqls", Input: `type Mutation {
-  createRequest(input: ScanRequestInput!): ScanRequest!
-  deleteRequest(id: ID!): Boolean!
-
-
-  createUser(input: UserInput!): User!
-  updateUser(userId: ID!, input: UserInput!): User!
-  deleteUser(userId: ID!): Boolean!
-
-  createPlan(input: PlanInput!): Plan!
-  updatePlan(input: PlanInput!): Plan!
-  deletePlan(planId: ID!): Boolean!
-
-  selectPlan(userId: ID!, planId: ID!): UserPlan!
-  cancelPlan(userId: ID!, planId: ID!): Boolean!
+	{Name: "../schema/sort.graphqls", Input: `enum Order {
+  ASC
+  DESC
 }
 
-type Query {
-  requests: [ScanRequest!]!
-  scannedProducts(requestId: ID!): [ScannedProductInfo!]!
+input SortBy {
+  field: String!
+  order: Order!
 }`, BuiltIn: false},
 	{Name: "../schema/user.graphqls", Input: `type User{
   id: ID!
@@ -968,6 +987,45 @@ func (ec *executionContext) field_Query_scannedProducts_args(ctx context.Context
 		}
 	}
 	args["requestId"] = arg0
+	var arg1 *model.SortBy
+	if tmp, ok := rawArgs["sortBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
+		arg1, err = ec.unmarshalOSortBy2ᚖgithubᚗcomᚋmakrorofᚋgormᚑgraphqlᚑpostgresᚑechoᚑauthᚋgraphqlᚋgraphᚋmodelᚐSortBy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sortBy"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_ScannedProductInfo_leftProductInfo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.SortBy
+	if tmp, ok := rawArgs["sortBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
+		arg0, err = ec.unmarshalOSortBy2ᚖgithubᚗcomᚋmakrorofᚋgormᚑgraphqlᚑpostgresᚑechoᚑauthᚋgraphqlᚋgraphᚋmodelᚐSortBy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sortBy"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_ScannedProductInfo_rightProductInfo_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.SortBy
+	if tmp, ok := rawArgs["sortBy"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortBy"))
+		arg0, err = ec.unmarshalOSortBy2ᚖgithubᚗcomᚋmakrorofᚋgormᚑgraphqlᚑpostgresᚑechoᚑauthᚋgraphqlᚋgraphᚋmodelᚐSortBy(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sortBy"] = arg0
 	return args, nil
 }
 
@@ -2407,7 +2465,7 @@ func (ec *executionContext) _Query_scannedProducts(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ScannedProducts(rctx, fc.Args["requestId"].(string))
+		return ec.resolvers.Query().ScannedProducts(rctx, fc.Args["requestId"].(string), fc.Args["sortBy"].(*model.SortBy))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2790,6 +2848,17 @@ func (ec *executionContext) fieldContext_ScannedProductInfo_leftProductInfo(ctx 
 			return nil, fmt.Errorf("no field named %q was found under type ProductInfo", field.Name)
 		},
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_ScannedProductInfo_leftProductInfo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
 	return fc, nil
 }
 
@@ -2847,6 +2916,17 @@ func (ec *executionContext) fieldContext_ScannedProductInfo_rightProductInfo(ctx
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ProductInfo", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_ScannedProductInfo_rightProductInfo_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -5236,6 +5316,40 @@ func (ec *executionContext) unmarshalInputScanRequestInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSortBy(ctx context.Context, obj interface{}) (model.SortBy, error) {
+	var it model.SortBy
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"field", "order"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "field":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Field = data
+		case "order":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("order"))
+			data, err := ec.unmarshalNOrder2githubᚗcomᚋmakrorofᚋgormᚑgraphqlᚑpostgresᚑechoᚑauthᚋgraphqlᚋgraphᚋmodelᚐOrder(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Order = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUserInput(ctx context.Context, obj interface{}) (model.UserInput, error) {
 	var it model.UserInput
 	asMap := map[string]interface{}{}
@@ -6295,6 +6409,16 @@ func (ec *executionContext) marshalNOffer2ᚖgithubᚗcomᚋmakrorofᚋgormᚑgr
 	return ec._Offer(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNOrder2githubᚗcomᚋmakrorofᚋgormᚑgraphqlᚑpostgresᚑechoᚑauthᚋgraphqlᚋgraphᚋmodelᚐOrder(ctx context.Context, v interface{}) (model.Order, error) {
+	var res model.Order
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNOrder2githubᚗcomᚋmakrorofᚋgormᚑgraphqlᚑpostgresᚑechoᚑauthᚋgraphqlᚋgraphᚋmodelᚐOrder(ctx context.Context, sel ast.SelectionSet, v model.Order) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) marshalNPlan2githubᚗcomᚋmakrorofᚋgormᚑgraphqlᚑpostgresᚑechoᚑauthᚋgraphqlᚋgraphᚋmodelᚐPlan(ctx context.Context, sel ast.SelectionSet, v model.Plan) graphql.Marshaler {
 	return ec._Plan(ctx, sel, &v)
 }
@@ -6953,6 +7077,14 @@ func (ec *executionContext) marshalOPlan2ᚖgithubᚗcomᚋmakrorofᚋgormᚑgra
 		return graphql.Null
 	}
 	return ec._Plan(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOSortBy2ᚖgithubᚗcomᚋmakrorofᚋgormᚑgraphqlᚑpostgresᚑechoᚑauthᚋgraphqlᚋgraphᚋmodelᚐSortBy(ctx context.Context, v interface{}) (*model.SortBy, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSortBy(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

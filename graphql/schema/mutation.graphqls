@@ -14,8 +14,3 @@ type Mutation {
   selectPlan(userId: ID!, planId: ID!): UserPlan!
   cancelPlan(userId: ID!, planId: ID!): Boolean!
 }
-
-type Query {
-  requests: [ScanRequest!]!
-  scannedProducts(requestId: ID!): [ScannedProductInfo!]!
-}

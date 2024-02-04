@@ -5,8 +5,8 @@ type ScanRequest {
 }
 
 type ScannedProductInfo{
-  leftProductInfo: ProductInfo!
-  rightProductInfo: ProductInfo!
+  leftProductInfo(sortBy: SortBy): ProductInfo!
+  rightProductInfo(sortBy: SortBy): ProductInfo!
 
   profit: Float!
 }

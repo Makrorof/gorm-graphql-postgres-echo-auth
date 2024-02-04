@@ -61,21 +61,7 @@ func (r *mutationResolver) CancelPlan(ctx context.Context, userID string, planID
 	panic(fmt.Errorf("not implemented: CancelPlan - cancelPlan"))
 }
 
-// Requests is the resolver for the requests field.
-func (r *queryResolver) Requests(ctx context.Context) ([]*model.ScanRequest, error) {
-	panic(fmt.Errorf("not implemented: Requests - requests"))
-}
-
-// ScannedProducts is the resolver for the scannedProducts field.
-func (r *queryResolver) ScannedProducts(ctx context.Context, requestID string) ([]*model.ScannedProductInfo, error) {
-	panic(fmt.Errorf("not implemented: ScannedProducts - scannedProducts"))
-}
-
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
 type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
