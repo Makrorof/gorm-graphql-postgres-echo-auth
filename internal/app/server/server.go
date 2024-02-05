@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"log"
@@ -7,24 +7,18 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/joho/godotenv"
-	"github.com/makrorof/gorm-graphql-postgres-echo-auth/graphql/graph"
+	"github.com/makrorof/gorm-graphql-postgres-echo-auth/api/gql"
 )
 
 const defaultPort = "8080"
 
-func main() {
-	err := godotenv.Load("dev.env")
-	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
-	}
-
+func Run() {
 	port := os.Getenv("API_PORT")
 	if port == "" {
 		port = defaultPort
 	}
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+	srv := handler.NewDefaultServer(gql.NewExecutableSchema(gql.Config{Resolvers: &gql.Resolver{}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
