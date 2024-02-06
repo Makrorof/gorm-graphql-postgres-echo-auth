@@ -8,11 +8,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/makrorof/gorm-graphql-postgres-echo-auth/internal/dto"
+	"github.com/makrorof/gorm-graphql-postgres-echo-auth/internal/entities"
 )
 
 // CreateRequest is the resolver for the createRequest field.
-func (r *mutationResolver) CreateRequest(ctx context.Context, input dto.ScanRequestInput) (*dto.ScanRequest, error) {
+func (r *mutationResolver) CreateRequest(ctx context.Context, input entities.ScanRequestInput) (*entities.ScanRequest, error) {
 	panic(fmt.Errorf("not implemented: CreateRequest - createRequest"))
 }
 
@@ -22,12 +22,12 @@ func (r *mutationResolver) DeleteRequest(ctx context.Context, id string) (bool, 
 }
 
 // CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input dto.UserInput) (*dto.User, error) {
+func (r *mutationResolver) CreateUser(ctx context.Context, input entities.UserInput) (*entities.User, error) {
 	panic(fmt.Errorf("not implemented: CreateUser - createUser"))
 }
 
 // UpdateUser is the resolver for the updateUser field.
-func (r *mutationResolver) UpdateUser(ctx context.Context, userID string, input dto.UserInput) (*dto.User, error) {
+func (r *mutationResolver) UpdateUser(ctx context.Context, userID string, input entities.UserInput) (*entities.User, error) {
 	panic(fmt.Errorf("not implemented: UpdateUser - updateUser"))
 }
 
@@ -37,12 +37,12 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, userID string) (bool,
 }
 
 // CreatePlan is the resolver for the createPlan field.
-func (r *mutationResolver) CreatePlan(ctx context.Context, input dto.PlanInput) (*dto.Plan, error) {
+func (r *mutationResolver) CreatePlan(ctx context.Context, input entities.PlanInput) (*entities.Plan, error) {
 	panic(fmt.Errorf("not implemented: CreatePlan - createPlan"))
 }
 
 // UpdatePlan is the resolver for the updatePlan field.
-func (r *mutationResolver) UpdatePlan(ctx context.Context, input dto.PlanInput) (*dto.Plan, error) {
+func (r *mutationResolver) UpdatePlan(ctx context.Context, input entities.PlanInput) (*entities.Plan, error) {
 	panic(fmt.Errorf("not implemented: UpdatePlan - updatePlan"))
 }
 
@@ -52,7 +52,7 @@ func (r *mutationResolver) DeletePlan(ctx context.Context, planID string) (bool,
 }
 
 // SelectPlan is the resolver for the selectPlan field.
-func (r *mutationResolver) SelectPlan(ctx context.Context, userID string, planID string) (*dto.UserPlan, error) {
+func (r *mutationResolver) SelectPlan(ctx context.Context, userID string, planID string) (*entities.UserPlan, error) {
 	panic(fmt.Errorf("not implemented: SelectPlan - selectPlan"))
 }
 

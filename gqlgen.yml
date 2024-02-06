@@ -14,8 +14,8 @@ exec:
 
 # Where should any generated models go?
 model:
-  filename: internal/dto/graph_gen.go
-  package: dto
+  filename: internal/entities/graph_gen.go
+  package: entities
 
 # Where should the resolver implementations go?
 resolver:

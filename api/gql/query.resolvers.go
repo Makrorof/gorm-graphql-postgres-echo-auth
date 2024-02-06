@@ -8,16 +8,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/makrorof/gorm-graphql-postgres-echo-auth/internal/dto"
+	"github.com/makrorof/gorm-graphql-postgres-echo-auth/internal/entities"
 )
 
 // Requests is the resolver for the requests field.
-func (r *queryResolver) Requests(ctx context.Context) ([]*dto.ScanRequest, error) {
+func (r *queryResolver) Requests(ctx context.Context) ([]*entities.ScanRequest, error) {
 	panic(fmt.Errorf("not implemented: Requests - requests"))
 }
 
 // ScannedProducts is the resolver for the scannedProducts field.
-func (r *queryResolver) ScannedProducts(ctx context.Context, requestID string, sortBy *dto.SortBy) ([]*dto.ScannedProductInfo, error) {
+func (r *queryResolver) ScannedProducts(ctx context.Context, requestID string, sortBy *entities.SortBy) ([]*entities.ScannedProductInfo, error) {
 	panic(fmt.Errorf("not implemented: ScannedProducts - scannedProducts"))
 }
 

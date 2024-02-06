@@ -5,6 +5,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/mitchellh/mapstructure"
+	"github.com/sirupsen/logrus"
 	"github.com/vektah/gqlparser/v2/ast"
 	"golang.org/x/net/context"
 )
@@ -45,4 +46,10 @@ func GetValuesFromSelections(ctx context.Context, template interface{}) map[stri
 		}
 	}
 	return values
+}
+
+func FailOnError(err error, msg string) {
+	if err != nil {
+		logrus.Panicf("%s: %s", msg, err)
+	}
 }
